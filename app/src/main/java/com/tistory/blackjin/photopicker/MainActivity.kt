@@ -126,9 +126,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    //TODO goToPreview
     private fun goToPreview(uri: Uri) {
-        Timber.d("uri : $uri")
+        PreviewActivity.startPreviewActivity(this, uri)
     }
 
     private fun setupAlbumRecyclerView() {

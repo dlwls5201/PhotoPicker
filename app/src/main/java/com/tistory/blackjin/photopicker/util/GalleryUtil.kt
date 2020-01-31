@@ -13,10 +13,8 @@ import java.util.*
 
 object GalleryUtil {
 
-    private const val INDEX_MEDIA_URI = MediaStore.MediaColumns._ID
+    private const val INDEX_MEDIA_ID = MediaStore.MediaColumns._ID
     private const val INDEX_DATE_ADDED = MediaStore.MediaColumns.DATE_ADDED
-
-    //private const val DISPLAY_NAME = MediaStore.Images.Media.DISPLAY_NAME
     private const val albumName = MediaStore.Images.Media.BUCKET_DISPLAY_NAME
 
     fun getMedia(context: Context): Single<List<Album>> {
@@ -26,7 +24,7 @@ object GalleryUtil {
                 val uri: Uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
 
                 val sortOrder = "$INDEX_DATE_ADDED DESC"
-                val projection = arrayOf(INDEX_MEDIA_URI, albumName, INDEX_DATE_ADDED)
+                val projection = arrayOf(INDEX_MEDIA_ID, albumName, INDEX_DATE_ADDED)
                 val cursor = context.contentResolver.query(uri, projection, null, null, sortOrder)
 
                 val albumList: List<Album> = cursor?.let {
@@ -43,13 +41,6 @@ object GalleryUtil {
 
                     val albumList: List<Album> = totalImageList.asSequence()
                         .groupBy { media -> media.albumName }
-                        /*.toSortedMap(Comparator { albumName1: String, albumName2: String ->
-                            if (albumName2 == "Camera") {
-                                1
-                            } else {
-                                albumName1.compareTo(albumName2, true)
-                            }
-                        })*/
                         .map(GalleryUtil::getAlbum)
                         .toList()
 
@@ -84,7 +75,7 @@ object GalleryUtil {
         try {
             cursor.run {
 
-                val idColumn = getColumnIndex(INDEX_MEDIA_URI)
+                val idColumn = getColumnIndex(INDEX_MEDIA_ID)
                 val id = cursor.getLong(idColumn)
 
                 val folderName = getString(getColumnIndex(albumName))
