@@ -6,17 +6,18 @@ import android.net.Uri
 import android.provider.MediaStore
 import com.tistory.blackjin.photopicker.R
 import com.tistory.blackjin.photopicker.model.Album
-import com.tistory.blackjin.photopicker.model.Media
+import com.tistory.blackjin.photopicker.model.Gallery
 import io.reactivex.Single
 import timber.log.Timber
-import java.io.File
 import java.util.*
 
-internal object GalleryUtil {
+object GalleryUtil {
 
-    private const val COLUMN_ID =  MediaStore.Images.Media._ID
+    private const val INDEX_MEDIA_URI = MediaStore.MediaColumns._ID
     private const val INDEX_DATE_ADDED = MediaStore.MediaColumns.DATE_ADDED
-    private const val ALBUM_NAME = MediaStore.Images.Media.DISPLAY_NAME
+
+    //private const val DISPLAY_NAME = MediaStore.Images.Media.DISPLAY_NAME
+    private const val albumName = MediaStore.Images.Media.BUCKET_DISPLAY_NAME
 
     fun getMedia(context: Context): Single<List<Album>> {
         return Single.create { emitter ->
@@ -25,11 +26,7 @@ internal object GalleryUtil {
                 val uri: Uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
 
                 val sortOrder = "$INDEX_DATE_ADDED DESC"
-                val projection = arrayOf(
-                    COLUMN_ID,
-                    ALBUM_NAME,
-                    INDEX_DATE_ADDED
-                )
+                val projection = arrayOf(INDEX_MEDIA_URI, albumName, INDEX_DATE_ADDED)
                 val cursor = context.contentResolver.query(uri, projection, null, null, sortOrder)
 
                 val albumList: List<Album> = cursor?.let {
@@ -46,13 +43,13 @@ internal object GalleryUtil {
 
                     val albumList: List<Album> = totalImageList.asSequence()
                         .groupBy { media -> media.albumName }
-                        .toSortedMap(Comparator { albumName1: String, albumName2: String ->
+                        /*.toSortedMap(Comparator { albumName1: String, albumName2: String ->
                             if (albumName2 == "Camera") {
                                 1
                             } else {
                                 albumName1.compareTo(albumName2, true)
                             }
-                        })
+                        })*/
                         .map(GalleryUtil::getAlbum)
                         .toList()
 
@@ -60,7 +57,6 @@ internal object GalleryUtil {
                         val albumName = context.getString(R.string.image_picker_album_all)
                         Album(
                             albumName,
-                            getOrElse(0) { Media(albumName, Uri.EMPTY) }.uri,
                             this
                         )
                     }
@@ -80,24 +76,25 @@ internal object GalleryUtil {
         }
     }
 
-    private fun getAlbum(entry: Map.Entry<String, List<Media>>): Album {
-        return Album(entry.key, entry.value[0].uri, entry.value)
+    private fun getAlbum(entry: Map.Entry<String, List<Gallery>>): Album {
+        return Album(entry.key, entry.value)
     }
 
-    private fun getImage(cursor: Cursor): Media? =
+    private fun getImage(cursor: Cursor): Gallery? =
         try {
             cursor.run {
 
-                val idColumn = getColumnIndex(COLUMN_ID)
+                val idColumn = getColumnIndex(INDEX_MEDIA_URI)
                 val id = cursor.getLong(idColumn)
 
-                val albumName = getString(getColumnIndex(ALBUM_NAME))
+                val folderName = getString(getColumnIndex(albumName))
+
                 val mediaUri = Uri.withAppendedPath(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     id.toString()
                 )
 
-                Media(albumName, mediaUri)
+                Gallery(folderName, mediaUri)
             }
         } catch (exception: Exception) {
             exception.printStackTrace()

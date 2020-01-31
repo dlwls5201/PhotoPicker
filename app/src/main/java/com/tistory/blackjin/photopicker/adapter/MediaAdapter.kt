@@ -9,49 +9,46 @@ import com.tistory.blackjin.photopicker.R
 import com.tistory.blackjin.photopicker.base.BaseDiffUtilCallback
 import com.tistory.blackjin.photopicker.base.BaseViewHolder
 import com.tistory.blackjin.photopicker.databinding.ItemGalleryBinding
-import com.tistory.blackjin.photopicker.model.Media
+import com.tistory.blackjin.photopicker.model.Gallery
 
-internal class MediaAdapter : RecyclerView.Adapter<BaseViewHolder<ViewDataBinding, Media>>() {
+internal class MediaAdapter : RecyclerView.Adapter<BaseViewHolder<ViewDataBinding, Gallery>>() {
 
-    private val items = mutableListOf<Media>()
+    private val items = mutableListOf<Gallery>()
 
     var onItemClickListener: OnItemClickListener? = null
 
     interface OnItemClickListener {
-        fun onItemClick(data: Media)
+        fun onItemClick(data: Gallery)
     }
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
-    ): BaseViewHolder<ViewDataBinding, Media> {
+    ): BaseViewHolder<ViewDataBinding, Gallery> {
         return ImageViewHolder(parent).apply {
             onItemClickListener?.let { listener ->
                 itemView.setOnClickListener {
                     listener.onItemClick(
-                        getItem(adapterPosition)
+                        items[adapterPosition]
                     )
                 }
             }
         }
     }
 
-    private fun getItem(position: Int) = items[getItemPosition(position)]
-
-    private fun getItemPosition(adapterPosition: Int) = adapterPosition
 
     override fun getItemCount() = items.size
 
-    override fun onBindViewHolder(holder: BaseViewHolder<ViewDataBinding, Media>, position: Int) {
-        holder.bind(getItem(position))
+    override fun onBindViewHolder(holder: BaseViewHolder<ViewDataBinding, Gallery>, position: Int) {
+        holder.bind(items[position])
     }
 
-    override fun onViewRecycled(holder: BaseViewHolder<ViewDataBinding, Media>) {
+    override fun onViewRecycled(holder: BaseViewHolder<ViewDataBinding, Gallery>) {
         holder.recycled()
         super.onViewRecycled(holder)
     }
 
-    fun replaceAll(items: List<Media>, useDiffCallback: Boolean = false) {
+    fun replaceAll(items: List<Gallery>, useDiffCallback: Boolean = false) {
         val diffCallback = BaseDiffUtilCallback(this.items, items)
         val diffResult = DiffUtil.calculateDiff(diffCallback)
 
@@ -66,13 +63,11 @@ internal class MediaAdapter : RecyclerView.Adapter<BaseViewHolder<ViewDataBindin
         }
     }
 
-    inner class ImageViewHolder(parent: ViewGroup) :
-        BaseViewHolder<ItemGalleryBinding, Media>(parent, R.layout.item_gallery) {
+    class ImageViewHolder(parent: ViewGroup) :
+        BaseViewHolder<ItemGalleryBinding, Gallery>(parent, R.layout.item_gallery) {
 
-        override fun bind(data: Media) {
-            binding.run {
-                media = data
-            }
+        override fun bind(data: Gallery) {
+            binding.gallery = data
         }
 
         override fun recycled() {

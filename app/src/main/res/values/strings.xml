@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">PhotoPicker</string>
     <string name="image_picker_album_all">All</string>
+
+    <!-- format -->
+    <string name="album_name_format">%s : %d</string>
 </resources>

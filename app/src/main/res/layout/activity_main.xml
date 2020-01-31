@@ -74,7 +74,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:maxLines="1"
-                android:text="@{String.valueOf(selectedAlbum.mediaUris.size())}"
+                android:text="@{String.valueOf(selectedAlbum.galleryUris.size())}"
                 tools:text="40" />
 
         </LinearLayout>

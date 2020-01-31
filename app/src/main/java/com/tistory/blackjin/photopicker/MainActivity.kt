@@ -4,22 +4,28 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.LinearLayout
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
+import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
+import com.tistory.blackjin.photopicker.adapter.AlbumAdapter
 import com.tistory.blackjin.photopicker.adapter.GridSpacingItemDecoration
 import com.tistory.blackjin.photopicker.adapter.MediaAdapter
+import com.tistory.blackjin.photopicker.databinding.ActivityMainBinding
 import com.tistory.blackjin.photopicker.model.Album
-import com.tistory.blackjin.photopicker.model.Media
+import com.tistory.blackjin.photopicker.model.Gallery
 import com.tistory.blackjin.photopicker.util.GalleryUtil
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,15 +36,20 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    private lateinit var binding: ActivityMainBinding
+
     private lateinit var mediaAdapter: MediaAdapter
+
+    private lateinit var albumAdapter: AlbumAdapter
 
     private var disposable: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
         setupMediaRecyclerView()
+        setupAlbumRecyclerView()
         setupBottomView()
         chkPermission()
     }
@@ -78,6 +89,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupBottomView() {
+        llSelectedAlbum.setOnClickListener {
+            if(drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.closeDrawer(GravityCompat.START)
+            } else {
+                drawerLayout.openDrawer(GravityCompat.START)
+            }
+        }
+    }
+
     private fun showRequestPermission() {
         ActivityCompat.requestPermissions(
             this,
@@ -91,7 +112,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupMediaRecyclerView() {
         mediaAdapter = MediaAdapter().apply {
             onItemClickListener = object : MediaAdapter.OnItemClickListener {
-                override fun onItemClick(data: Media) {
+                override fun onItemClick(data: Gallery) {
                     goToPreview(data.uri)
                 }
             }
@@ -110,13 +131,21 @@ class MainActivity : AppCompatActivity() {
         Timber.d("uri : $uri")
     }
 
-    private fun setupBottomView() {
-        llSelectedAlbum.setOnClickListener {
-            if(drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                drawerLayout.closeDrawer(GravityCompat.START)
-            } else {
-                drawerLayout.openDrawer(GravityCompat.START)
+    private fun setupAlbumRecyclerView() {
+        albumAdapter = AlbumAdapter().apply {
+            onItemClickListener = object : AlbumAdapter.OnItemClickListener {
+                override fun onItemClick(data: Album) {
+                    setSelectedAlbum(data)
+                    closeDrawer()
+                }
+
             }
+        }
+
+        with(rvAlbum) {
+            adapter = albumAdapter
+            addItemDecoration(DividerItemDecoration(this@MainActivity, LinearLayout.VERTICAL))
+            itemAnimator = null
         }
     }
 
@@ -125,14 +154,23 @@ class MainActivity : AppCompatActivity() {
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { albumList: List<Album> ->
-                setSelectedAlbum(albumList)
+                albumAdapter.replaceAll(albumList)
+
+                //albumList's first index is "ALL"
+                setSelectedAlbum(albumList[0])
+                closeDrawer()
             }
     }
 
-    private fun setSelectedAlbum(albumList: List<Album>) {
-        //albumList's first index is "ALL"
-        val album = albumList[0]
-        mediaAdapter.replaceAll(album.mediaUris)
+    private fun setSelectedAlbum(album: Album) {
+        binding.selectedAlbum = album
+        mediaAdapter.replaceAll(album.galleryUris)
+    }
+
+    private fun closeDrawer() {
+        if(drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        }
     }
 
     companion object {
