@@ -4,4 +4,7 @@
 
     <!-- format -->
     <string name="album_name_format">%s : %d</string>
+    <string name="export">Export</string>
+    <string name="overlay">Overlay</string>
+    <string name="loading">Loading</string>
 </resources>

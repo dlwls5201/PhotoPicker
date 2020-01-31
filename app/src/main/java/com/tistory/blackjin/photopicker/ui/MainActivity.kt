@@ -1,4 +1,4 @@
-package com.tistory.blackjin.photopicker
+package com.tistory.blackjin.photopicker.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -13,6 +13,7 @@ import androidx.core.view.GravityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
+import com.tistory.blackjin.photopicker.R
 import com.tistory.blackjin.photopicker.adapter.AlbumAdapter
 import com.tistory.blackjin.photopicker.adapter.GridSpacingItemDecoration
 import com.tistory.blackjin.photopicker.adapter.MediaAdapter
@@ -46,7 +47,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        binding = DataBindingUtil.setContentView(
+            this,
+            R.layout.activity_main
+        )
 
         setupMediaRecyclerView()
         setupAlbumRecyclerView()
@@ -89,16 +93,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupBottomView() {
-        llSelectedAlbum.setOnClickListener {
-            if(drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                drawerLayout.closeDrawer(GravityCompat.START)
-            } else {
-                drawerLayout.openDrawer(GravityCompat.START)
-            }
-        }
-    }
-
     private fun showRequestPermission() {
         ActivityCompat.requestPermissions(
             this,
@@ -107,6 +101,29 @@ class MainActivity : AppCompatActivity() {
             ),
             REQUEST_PERMISSION
         )
+    }
+
+    private fun loadMedia() {
+        disposable = GalleryUtil.getMedia(this)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { albumList: List<Album> ->
+                albumAdapter.replaceAll(albumList)
+
+                //albumList's first index is "ALL"
+                setSelectedAlbum(albumList[0])
+                closeDrawer()
+            }
+    }
+
+    private fun setupBottomView() {
+        llSelectedAlbum.setOnClickListener {
+            if(drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.closeDrawer(GravityCompat.START)
+            } else {
+                drawerLayout.openDrawer(GravityCompat.START)
+            }
+        }
     }
 
     private fun setupMediaRecyclerView() {
@@ -119,7 +136,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         with(rvMedia) {
-            layoutManager = GridLayoutManager(this@MainActivity, IMAGE_SPAN_COUNT)
+            layoutManager = GridLayoutManager(
+                this@MainActivity,
+                IMAGE_SPAN_COUNT
+            )
             addItemDecoration(GridSpacingItemDecoration(IMAGE_SPAN_COUNT, 4))
             itemAnimator = null
             adapter = mediaAdapter
@@ -127,7 +147,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun goToPreview(uri: Uri) {
-        PreviewActivity.startPreviewActivity(this, uri)
+        PreviewActivity.startPreviewActivity(
+            this,
+            uri
+        )
     }
 
     private fun setupAlbumRecyclerView() {
@@ -146,19 +169,6 @@ class MainActivity : AppCompatActivity() {
             addItemDecoration(DividerItemDecoration(this@MainActivity, LinearLayout.VERTICAL))
             itemAnimator = null
         }
-    }
-
-    private fun loadMedia() {
-        disposable = GalleryUtil.getMedia(this)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { albumList: List<Album> ->
-                albumAdapter.replaceAll(albumList)
-
-                //albumList's first index is "ALL"
-                setSelectedAlbum(albumList[0])
-                closeDrawer()
-            }
     }
 
     private fun setSelectedAlbum(album: Album) {
